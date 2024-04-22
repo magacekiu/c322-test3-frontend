@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="general.css">
     <link rel="stylesheet" href="cards.css">
+    <script src="configuration.js"></script>
   </head>
   <body>
     <ul class="topnav">
@@ -59,12 +60,16 @@
     <div id="list" class="cards"></div>
 
     <script>
-      let host = "http://localhost:8080";
+      let host = "https://c322-test3-backend-latest-6p0h.onrender.com";
       let questions = [];
       displayTheQuestions();
 
       async function getAll() {
-        let response = await fetch(host + "/questions");
+        let response = await fetch(host + "/questions", {
+            headers: {
+                "Authorization": `Bearer ${getTheToken()}`
+            }
+        });
         let result = await response.json();
         return result;
       }
@@ -80,62 +85,77 @@
         for (let question of questions) {
           let div = document.createElement("div");
           div.className = "card";
+
+          // Fetch the image with authorization
+          let imageUrl = `https://c322-test3-backend-latest-6p0h.onrender.com/questions/${question.id}/image`;
+          let imageResponse = await fetch(imageUrl, {
+              headers: {
+                  "Authorization": `Bearer ${getTheToken()}`
+              }
+          });
+
+          let imageSrc = "images/default.jpg"; // Fallback image path
+          if (imageResponse.ok) {
+              const imageBlob = await imageResponse.blob();
+              imageSrc = URL.createObjectURL(imageBlob);
+          }
+
           let innerHtml = `
-         
-        <img src="http://localhost:8080/questions/${question.id}/image" alt="question" style="width:100%">
-        <div class="container">
-          <h4><b>${question.id}</b></h4> 
-          <p>${question.description}</p>
-          <form>
-              <input type="radio" id="q${question.id}ptionA" name="q2Answer" value="A">
-              <label for="q${question.id}ptionA">${question.choices[0]}</label><br>
+              <img src="${imageSrc}" alt="question" style="width:100%">
+              <div class="container">
+                  <h4><b>${question.id}</b></h4>
+                  <p>${question.description}</p>
+                  <form>
+                      <input type="radio" id="q${question.id}ptionA" name="q2Answer" value="A">
+                      <label for="q${question.id}ptionA">${question.choices[0]}</label><br>
 
-              <input type="radio" id="q${question.id}ptionB" name="q2Answer" value="B">
-              <label for="q${question.id}ptionB">${question.choices[1]}</label><br>
+                      <input type="radio" id="q${question.id}ptionB" name="q2Answer" value="B">
+                      <label for="q${question.id}ptionB">${question.choices[1]}</label><br>
 
-              <input type="radio" id="q${question.id}ptionC" name="q2Answer" value="C">
-              <label for="q${question.id}ptionC">${question.choices[2]}</label><br>       
-          </form> 
-        </div>
-     
-            `;
+                      <input type="radio" id="q${question.id}ptionC" name="q2Answer" value="C">
+                      <label for="q${question.id}ptionC">${question.choices[2]}</label><br>
+                  </form>
+              </div>
+          `;
           div.innerHTML = innerHtml;
           list.appendChild(div);
         }
       }
 
-      function add() {
-        let form = document.forms[0];
-        let formData = new FormData(form);
-        // output as an object
-        let data = Object.fromEntries(formData);
-        let question = {};
-        question.description = data.description;
-        question.choices = [data.optionA, data.optionB, data.optionC];
-        switch (data.answer) {
-          case "A":
-            question.answer = data.optionA;
-            break;
-          case "B":
-            question.answer = data.optionB;
-            break;
-          case "C":
-            question.answer = data.optionC;
-            break;
-        }        
-        addTheQuestion(question, data.imageFile);
+
+      async function add() {
+          let form = document.forms[0];
+          let formData = new FormData(form);
+          let data = Object.fromEntries(formData);
+
+          // Log the form data entries
+          for (let [key, value] of formData.entries()) {
+              console.log(key, value);
+          }
+
+          let question = {
+              description: data.description,
+              choices: [data.optionA, data.optionB, data.optionC],
+              answer: data[data.answer]
+          };
+
+          // Log the constructed question object
+          console.log("Question object:", question);
+
+          addTheQuestion(question, formData.get('imageFile'));
       }
 
       async function addTheQuestion(question, imageFile) {
         let message = "";
-
         let request = {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          },
+            "Authorization": `Bearer ${getTheToken()}`
+          }, 
           body: JSON.stringify(question),
         };
+        console.log("Sending request:", request); // Log the request
         let response = await fetch(host + "/questions", request);
         if (response.status == 200) {
           let id = await response.json();
@@ -155,18 +175,17 @@
       }
 
       async function submitTheImage(id, imageFile) {
-        let formData = new FormData();
-        formData.append("file", imageFile);
-        let request = {
-          method: "POST",
-          body: formData,
-        };
-        let response = await fetch(
-          host + "/questions/" + id + "/image",
-          request
-        );
-        let result = await response.json();
-        return result;
+          let formData = new FormData();
+          formData.append("file", imageFile);
+          let request = {
+              method: "POST",
+              headers: {
+                  "Authorization": `Bearer ${getTheToken()}`
+              },
+              body: formData,
+          };
+          let response = await fetch(host + "/questions/" + id + "/image", request);
+          return response.ok;
       }
     </script>
   </body>

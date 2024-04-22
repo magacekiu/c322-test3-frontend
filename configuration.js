@@ -1,7 +1,7 @@
 const mode = 0;
 
-const host_local = "http://localhost:8080";
-const host_remote = "https://ducks-service-???.onrender.com";
+const host_local = "https://c322-test3-backend-latest-6p0h.onrender.com";
+const host_remote = "https://c322-test3-backend-latest-6p0h.onrender.com";
 
 function getHost() {
     return (mode == 0) ? host_local : host_remote;
@@ -35,7 +35,9 @@ let configuration = {
     token: () => getTheToken()    
 };
 
-updateTheNavigationBar();
+document.addEventListener('DOMContentLoaded', function() {
+    updateTheNavigationBar();
+});
 
 async function updateTheNavigationBar() {
     const navigation = document.getElementsByClassName("topnav")[0];
@@ -52,64 +54,52 @@ async function updateTheNavigationBar() {
 
 async function signup() {
     let email = document.getElementById("email").value;
-    let username = document.getElementById("username").value;
-    let password = document.getElementById("password").value;
-    let customer = {email:email, username: username, password: password}
+    let username = document.getElementById("username-signup").value;
+    let password = document.getElementById("password-signup").value;
+    let customer = { email: email, username: username, password: password };
     let request = {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify(customer)
-      };
-      try {
+    };
+    console.log("Request body:", request.body); 
+    try {
         let response = await fetch(getHost() + "/signup", request);
-        if(response.status == 200) {  
-            alert("The registration was successful!")
+        let responseBody = await response.text(); 
+        console.log(`Response status: ${response.status}, Response body:`, responseBody); 
+        if (response.status == 200) {
+            alert("The registration was successful!");
             location.href = "login.html";
-
         } else {
-            console.log(`response status:${response.status}`);            
-            alert("Something went wrong!");
+            alert("Something went wrong: " + responseBody);
         }
-      }
-      catch(error) {
-        console.log(error);        
+    } catch (error) {
+        console.log("Network error:", error);
         alert("Something went wrong!");
-      }    
+    }
 }
 
 
 
-async function login() {    
-    let username = document.getElementById("username").value;
-    let password = document.getElementById("password").value;
-    let customer = {username: username, password: password}
+async function login() {
+    let username = document.getElementById("username-signin").value;
+    let password = document.getElementById("password-signin").value;
+    let customer = { username: username, password: password };
     let request = {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(customer)
-      };
-      try {
-        let response = await fetch(getHost() + "/signin", request);
-        if(response.status == 200) {  
-            alert("The login was successful!");
-            const token = await response.text();
-            saveTheToken(token);            
-            location.href = "index.html";
-        } else {
-            console.log(`response status:${response.status}`);   
-            removeTheToken();         
-            alert("Something went wrong!");
-        }
-      }
-      catch(error) {
-        console.log(error); 
-        removeTheToken();       
-        alert("Something went wrong!");
-      }    
+    };
+    let response = await fetch(getHost() + "/signin", request);
+    if (response.ok) {
+        const token = await response.text();
+        saveTheToken(token);
+        location.href = "index.html";
+    } else {
+        alert("Login failed!");
+    }
 }
 
 async function logout() {   

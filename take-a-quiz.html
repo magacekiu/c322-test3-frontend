@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="general.css">
     <link rel="stylesheet" href="cards.css">
+    <script src="configuration.js"></script>
 </head>
 <body>
     <ul class="topnav">
@@ -22,12 +23,16 @@
       <div id="list" class="cards"></div>
 
       <script>
-        let host = "http://localhost:8080";
+        let host = "https://c322-test3-backend-latest-6p0h.onrender.com";
         let quizzes = [];
         displayTheQuizzes();
   
         async function getAll() {
-          let response = await fetch(host + "/quizzes");
+          let response = await fetch(host + "/quizzes", {
+            headers: {
+              "Authorization": `Bearer ${getTheToken()}`
+            }
+          });
           let result = await response.json();
           return result;
         }
